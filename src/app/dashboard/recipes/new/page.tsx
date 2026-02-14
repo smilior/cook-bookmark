@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { RecipeForm } from "@/components/recipe-form";
 import type { RecipeFormData } from "@/components/recipe-form";
 import { LoadingSpinner } from "@/components/loading-spinner";
-import { createRecipe, getCategories } from "@/lib/actions/recipe";
+import { createRecipe, getCategories, getOrCreateCategoryByName } from "@/lib/actions/recipe";
 
 export default function NewRecipePage() {
   const router = useRouter();
@@ -40,6 +40,18 @@ export default function NewRecipePage() {
         setIsExtracting(false);
         return;
       }
+      // Resolve category name to ID (get or create)
+      let resolvedCategoryId = "";
+      if (data.category) {
+        const catId = await getOrCreateCategoryByName(data.category);
+        if (catId) {
+          resolvedCategoryId = catId;
+          // Refresh categories list so the new category shows in the dropdown
+          const updatedCategories = await getCategories();
+          setCategories(updatedCategories);
+        }
+      }
+
       setExtractedData({
         title: data.title || "",
         sourceUrl: url.trim(),
@@ -56,7 +68,7 @@ export default function NewRecipePage() {
         nutrition: typeof data.nutrition === "object" && data.nutrition ? data.nutrition : {},
         tips: Array.isArray(data.tips) ? data.tips : [],
         tags: data.siteName ? [data.siteName] : [],
-        categoryId: "",
+        categoryId: resolvedCategoryId,
       });
       setStep("form");
     } catch {

@@ -333,6 +333,32 @@ export async function getTags() {
   return db.select().from(tag).orderBy(asc(tag.name));
 }
 
+// ─── Get or Create Category by Name ─────────────────────────
+
+export async function getOrCreateCategoryByName(name: string): Promise<string | null> {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+
+  const existing = await db
+    .select()
+    .from(category)
+    .where(eq(category.name, trimmed))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return existing[0].id;
+  }
+
+  const id = crypto.randomUUID();
+  await db.insert(category).values({
+    id,
+    name: trimmed,
+    createdAt: new Date(),
+  });
+
+  return id;
+}
+
 // ─── Internal Helpers ────────────────────────────────────────
 
 async function linkTags(recipeId: string, tagNames: string[]) {

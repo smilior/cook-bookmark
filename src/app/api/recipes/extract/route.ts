@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ai, MODEL, GEMINI_CONFIG } from "@/lib/gemini";
+import { db } from "@/lib/db";
+import { category } from "@/lib/db/schema";
+import { asc } from "drizzle-orm";
 
 function extractImageUrl(html: string): string {
   // Try og:image first
@@ -189,6 +192,10 @@ export async function POST(request: NextRequest) {
       return true;
     }).slice(0, 30);
 
+    // Fetch existing categories for classification
+    const existingCategories = await db.select({ name: category.name }).from(category).orderBy(asc(category.name));
+    const categoryNames = existingCategories.map((c) => c.name);
+
     // Strip HTML and truncate
     const textContent = stripHtml(html).slice(0, 10000);
 
@@ -205,6 +212,7 @@ JSON形式のみで回答してください。マークダウンのコードブ�
 - calories: カロリー
 - nutrition: 栄養情報（オブジェクト形式 {"key": "value"}）
 - tips: ポイント・コツ・ヒント（文字列の配列）。レシピのポイントやコツ、ワンポイントアドバイスなどがあれば抽出してください
+- category: このレシピのカテゴリ名（文字列）。${categoryNames.length > 0 ? `以下の既存カテゴリから最も適切なものを選んでください: [${categoryNames.join(", ")}]。どれにも当てはまらない場合は新しいカテゴリ名を提案してください` : "料理のカテゴリ名を提案してください"}（例: 主菜、副菜、スープ、デザート、パン、麺類など）
 - imageUrl: "${imageUrl}"
 
 情報が見つからない場合は空文字列または空配列を返してください。
@@ -216,7 +224,7 @@ ${jsonLdSteps.map((s, i) => `手順${i + 1}: ${s.text.slice(0, 80)}${s.imageUrl 
 ${stepImages.map((img, i) => `[${i + 1}] URL: ${img.src}${img.alt ? ` | alt: ${img.alt}` : ""}${img.context ? ` | 周辺テキスト: ${img.context}` : ""}`).join("\n")}
 
 回答は以下のJSON形式のみで返してください:
-{"title":"string","ingredients":[{"name":"string","amount":"string","group":"string"}],"steps":[{"text":"string","imageUrl":"string"}],"cookingTime":"string","servings":"string","calories":"string","nutrition":{},"tips":["string"],"imageUrl":"string"}
+{"title":"string","ingredients":[{"name":"string","amount":"string","group":"string"}],"steps":[{"text":"string","imageUrl":"string"}],"cookingTime":"string","servings":"string","calories":"string","nutrition":{},"tips":["string"],"category":"string","imageUrl":"string"}
 
 ウェブページのテキスト:
 ${textContent}`;
@@ -274,6 +282,7 @@ ${textContent}`;
       tips: Array.isArray(recipeData.tips)
         ? recipeData.tips.filter((t: unknown) => typeof t === "string" && t.trim())
         : [],
+      category: typeof recipeData.category === "string" ? recipeData.category.trim() : "",
       imageUrl: recipeData.imageUrl || imageUrl || "",
       siteName,
     };
