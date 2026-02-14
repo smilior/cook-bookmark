@@ -21,7 +21,11 @@ export function SignInButton() {
         size="sm"
         onClick={() =>
           signOut({
-            fetchOptions: { onSuccess: () => (window.location.href = "/") },
+            fetchOptions: {
+              onSuccess: () => {
+                window.location.href = "/";
+              },
+            },
           })
         }
       >

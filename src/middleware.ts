@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
 
   if (!sessionCookie) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", request.pathname);
+    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);
   }
 
