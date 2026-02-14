@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { recipe, category, tag, recipeTag, user } from "@/lib/db/schema";
 import { getServerSession, isAllowedEmail } from "@/lib/auth-session";
 import { revalidatePath } from "next/cache";
-import { eq, like, and, or, desc, asc } from "drizzle-orm";
+import { eq, like, and, or, desc, asc, inArray } from "drizzle-orm";
 
 // ─── Auth Helper ─────────────────────────────────────────────
 
@@ -269,6 +269,18 @@ export async function deleteRecipe(id: string) {
   await requireAuth();
 
   await db.delete(recipe).where(eq(recipe.id, id));
+
+  revalidatePath("/dashboard");
+}
+
+// ─── Delete Recipes (Bulk) ───────────────────────────────────
+
+export async function deleteRecipes(ids: string[]) {
+  await requireAuth();
+
+  if (ids.length === 0) return;
+
+  await db.delete(recipe).where(inArray(recipe.id, ids));
 
   revalidatePath("/dashboard");
 }
