@@ -94,11 +94,35 @@ export async function POST(request: NextRequest) {
       html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:site_name["']/i);
     const siteName = siteNameMatch?.[1]?.trim() ?? new URL(url).hostname.replace(/^www\./, "");
 
-    // Extract step images from HTML before stripping
-    // Look for images near recipe step sections
-    const stepImageMatches = [...html.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi)]
-      .map((m) => m[1])
-      .filter((src) => src.startsWith("http") && !src.includes("logo") && !src.includes("icon") && !src.includes("avatar"));
+    // Extract images with context (alt, surrounding text) for step matching
+    const imgContexts: { src: string; alt: string; context: string }[] = [];
+    const imgRegex = /<img[^>]+>/gi;
+    let imgMatch;
+    while ((imgMatch = imgRegex.exec(html)) !== null) {
+      const tag = imgMatch[0];
+      const srcMatch = tag.match(/src=["']([^"']+)["']/i);
+      if (!srcMatch) continue;
+      const src = srcMatch[1];
+      if (!src.startsWith("http")) continue;
+      if (/logo|icon|avatar|badge|emoji|button|arrow/i.test(src)) continue;
+
+      const alt = tag.match(/alt=["']([^"']*?)["']/i)?.[1] ?? "";
+
+      // Grab surrounding text (~200 chars before & after the img tag)
+      const pos = imgMatch.index!;
+      const before = html.slice(Math.max(0, pos - 200), pos);
+      const after = html.slice(pos + tag.length, pos + tag.length + 200);
+      const nearby = stripHtml(before + " " + after).slice(0, 150);
+
+      imgContexts.push({ src, alt, context: nearby });
+    }
+    // Deduplicate by src, keep first 30
+    const seen = new Set<string>();
+    const stepImages = imgContexts.filter((img) => {
+      if (seen.has(img.src)) return false;
+      seen.add(img.src);
+      return true;
+    }).slice(0, 30);
 
     // Strip HTML and truncate
     const textContent = stripHtml(html).slice(0, 10000);
@@ -110,7 +134,7 @@ JSON形式のみで回答してください。マークダウンのコードブ�
 抽出する情報:
 - title: 料理名
 - ingredients: 材料リスト（配列）各要素は {"name": "材料名", "amount": "分量", "group": "グループ名"} の形式。材料が「A」「B」「ソース」「生地」「タレ」などのグループに分かれている場合はgroup名を設定。グループがない場合はgroupを空文字列にしてください
-- steps: 調理手順（配列）各要素は {"text": "手順テキスト", "imageUrl": "手順画像URL"} の形式。画像がない手順はimageUrlを空文字列にしてください
+- steps: 調理手順（配列）各要素は {"text": "手順テキスト", "imageUrl": "手順画像URL"} の形式。下記の「画像一覧」からalt属性や周辺テキストを手がかりに、各手順に対応する画像URLを設定してください。対応する画像がない手順はimageUrlを空文字列にしてください
 - cookingTime: 調理時間
 - servings: 何人前
 - calories: カロリー
@@ -120,8 +144,8 @@ JSON形式のみで回答してください。マークダウンのコードブ�
 
 情報が見つからない場合は空文字列または空配列を返してください。
 
-ページ内の画像URL一覧（手順画像の参考にしてください）:
-${stepImageMatches.slice(0, 20).join("\n")}
+ページ内の画像一覧（各手順に対応する画像を選んでください）:
+${stepImages.map((img, i) => `[${i + 1}] URL: ${img.src}${img.alt ? ` | alt: ${img.alt}` : ""}${img.context ? ` | 周辺テキスト: ${img.context}` : ""}`).join("\n")}
 
 回答は以下のJSON形式のみで返してください:
 {"title":"string","ingredients":[{"name":"string","amount":"string","group":"string"}],"steps":[{"text":"string","imageUrl":"string"}],"cookingTime":"string","servings":"string","calories":"string","nutrition":{},"tips":["string"],"imageUrl":"string"}
