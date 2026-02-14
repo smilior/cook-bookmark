@@ -15,6 +15,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Cook Bookmark",
   description: "料理レシピをブックマークするアプリ",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Cook Bookmark",
+  },
 };
 
 export default function RootLayout({

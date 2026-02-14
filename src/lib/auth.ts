@@ -8,6 +8,14 @@ export const auth = betterAuth({
     provider: "sqlite",
     schema,
   }),
+  session: {
+    expiresIn: 60 * 60 * 24 * 30, // 30日
+    updateAge: 60 * 60 * 24, // 1日ごとにセッション期限を自動延長
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5, // 5分間DBアクセスなしでセッション検証
+    },
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
