@@ -28,9 +28,24 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     getCategories(),
   ]);
 
+  const mapped = recipes.map((r) => ({
+    id: r.id,
+    title: r.title,
+    sourceUrl: r.sourceUrl,
+    imageUrl: r.imageUrl,
+    rating: r.rating,
+    isFavorite: r.isFavorite,
+    cookingTime: r.cookingTime,
+    servings: r.servings,
+    categoryId: r.categoryId,
+    categoryName: r.categoryName,
+    userName: r.userName,
+    createdAt: r.createdAt,
+  }));
+
   return (
     <DashboardContent
-      recipes={recipes}
+      recipes={mapped}
       categories={categories}
       initialSearch={search}
       initialCategoryId={categoryId || null}

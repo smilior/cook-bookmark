@@ -3,21 +3,35 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 import Link from "next/link";
-import { Heart, ArrowDownUp, UtensilsCrossed, Plus } from "lucide-react";
+import {
+  Heart,
+  ArrowDownUp,
+  UtensilsCrossed,
+  Plus,
+  Clock,
+  ExternalLink,
+} from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 import { CategoryChips } from "@/components/category-chips";
-import { RecipeCard } from "@/components/recipe-card";
+import { StarRating } from "@/components/star-rating";
+import { FavoriteButton } from "@/components/favorite-button";
 import { toggleFavorite } from "@/lib/actions/recipe";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface Recipe {
   id: string;
   title: string;
+  sourceUrl: string | null;
   imageUrl: string | null;
   rating: number | null;
   isFavorite: boolean;
   cookingTime: string | null;
+  servings: string | null;
   categoryId: string | null;
+  categoryName: string | null;
+  userName: string | null;
+  createdAt: Date;
 }
 
 interface Category {
@@ -131,22 +145,64 @@ export function DashboardContent({
       </div>
 
       {recipes.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="divide-y divide-border rounded-lg border bg-card">
           {recipes.map((recipe) => (
-            <RecipeCard
+            <div
               key={recipe.id}
-              recipe={{
-                id: recipe.id,
-                title: recipe.title,
-                imageUrl: recipe.imageUrl,
-                rating: recipe.rating ?? undefined,
-                isFavorite: recipe.isFavorite,
-                cookingTime: recipe.cookingTime
-                  ? parseInt(recipe.cookingTime, 10) || null
-                  : null,
-              }}
-              onToggleFavorite={(id) => handleToggleFavorite(id)}
-            />
+              className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/50"
+            >
+              {/* Favorite */}
+              <FavoriteButton
+                isFavorite={recipe.isFavorite}
+                onToggle={() => handleToggleFavorite(recipe.id)}
+                size="sm"
+              />
+
+              {/* Title + Meta */}
+              <Link
+                href={`/dashboard/recipes/${recipe.id}`}
+                className="min-w-0 flex-1"
+              >
+                <p className="truncate font-medium">{recipe.title}</p>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                  {recipe.categoryName && (
+                    <Badge variant="secondary" className="text-xs px-1.5 py-0">
+                      {recipe.categoryName}
+                    </Badge>
+                  )}
+                  {recipe.cookingTime && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {recipe.cookingTime}
+                    </span>
+                  )}
+                  {recipe.servings && (
+                    <span>{recipe.servings}</span>
+                  )}
+                  {recipe.userName && (
+                    <span>{recipe.userName}</span>
+                  )}
+                </div>
+              </Link>
+
+              {/* Rating */}
+              <div className="hidden sm:block">
+                <StarRating value={recipe.rating ?? 0} readonly size="sm" />
+              </div>
+
+              {/* Source link */}
+              {recipe.sourceUrl && (
+                <a
+                  href={recipe.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 text-muted-foreground hover:text-primary"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+            </div>
           ))}
         </div>
       ) : (
