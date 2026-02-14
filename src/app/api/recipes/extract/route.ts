@@ -23,6 +23,69 @@ function extractImageUrl(html: string): string {
   return "";
 }
 
+// Extract step images from JSON-LD structured data (Schema.org Recipe)
+function extractJsonLdStepImages(html: string): { text: string; imageUrl: string }[] {
+  const steps: { text: string; imageUrl: string }[] = [];
+  const scriptRegex = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match;
+  while ((match = scriptRegex.exec(html)) !== null) {
+    try {
+      const data = JSON.parse(match[1]);
+      const recipes = findRecipeObjects(data);
+      for (const recipe of recipes) {
+        if (!Array.isArray(recipe.recipeInstructions)) continue;
+        for (const step of recipe.recipeInstructions) {
+          if (step["@type"] === "HowToStep" || step.text) {
+            const text = (step.text || step.name || "").trim();
+            let img = "";
+            if (typeof step.image === "string") {
+              img = step.image;
+            } else if (Array.isArray(step.image) && step.image.length > 0) {
+              img = typeof step.image[0] === "string" ? step.image[0] : step.image[0]?.url || "";
+            } else if (step.image?.url) {
+              img = step.image.url;
+            }
+            if (text) steps.push({ text, imageUrl: img });
+          }
+        }
+      }
+    } catch {
+      // ignore invalid JSON-LD
+    }
+  }
+  return steps;
+}
+
+// Recursively find Recipe objects in JSON-LD (handles @graph, arrays, nested)
+function findRecipeObjects(data: unknown): Record<string, unknown>[] {
+  const results: Record<string, unknown>[] = [];
+  if (Array.isArray(data)) {
+    for (const item of data) results.push(...findRecipeObjects(item));
+  } else if (data && typeof data === "object") {
+    const obj = data as Record<string, unknown>;
+    if (obj["@type"] === "Recipe" || (Array.isArray(obj["@type"]) && (obj["@type"] as string[]).includes("Recipe"))) {
+      results.push(obj);
+    }
+    if (obj["@graph"]) results.push(...findRecipeObjects(obj["@graph"]));
+  }
+  return results;
+}
+
+// Extract image URL from an img tag, checking src, data-src, srcset
+function extractImgSrc(tag: string, baseUrl: string): string {
+  // Priority: data-src > src > srcset (first entry)
+  const dataSrc = tag.match(/data-(?:lazy-)?src=["']([^"']+)["']/i);
+  const src = tag.match(/\ssrc=["']([^"']+)["']/i);
+  const srcset = tag.match(/srcset=["']([^"',\s]+)/i);
+  const raw = dataSrc?.[1] || src?.[1] || srcset?.[1] || "";
+  if (!raw) return "";
+  try {
+    return new URL(raw, baseUrl).href;
+  } catch {
+    return raw.startsWith("http") ? raw : "";
+  }
+}
+
 function stripHtml(html: string): string {
   // Remove script and style tags with content
   let text = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ");
@@ -94,16 +157,18 @@ export async function POST(request: NextRequest) {
       html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:site_name["']/i);
     const siteName = siteNameMatch?.[1]?.trim() ?? new URL(url).hostname.replace(/^www\./, "");
 
-    // Extract images with context (alt, surrounding text) for step matching
+    // 1) Try JSON-LD structured data first (most reliable for step images)
+    const jsonLdSteps = extractJsonLdStepImages(html);
+    const hasJsonLdImages = jsonLdSteps.some((s) => s.imageUrl);
+
+    // 2) Extract images with context (alt, surrounding text) as fallback
     const imgContexts: { src: string; alt: string; context: string }[] = [];
     const imgRegex = /<img[^>]+>/gi;
     let imgMatch;
     while ((imgMatch = imgRegex.exec(html)) !== null) {
       const tag = imgMatch[0];
-      const srcMatch = tag.match(/src=["']([^"']+)["']/i);
-      if (!srcMatch) continue;
-      const src = srcMatch[1];
-      if (!src.startsWith("http")) continue;
+      const src = extractImgSrc(tag, url);
+      if (!src) continue;
       if (/logo|icon|avatar|badge|emoji|button|arrow/i.test(src)) continue;
 
       const alt = tag.match(/alt=["']([^"']*?)["']/i)?.[1] ?? "";
@@ -144,7 +209,10 @@ JSON形式のみで回答してください。マークダウンのコードブ�
 
 情報が見つからない場合は空文字列または空配列を返してください。
 
-ページ内の画像一覧（各手順に対応する画像を選んでください）:
+${hasJsonLdImages ? `構造化データから取得した手順と画像の対応（これを優先して使ってください）:
+${jsonLdSteps.map((s, i) => `手順${i + 1}: ${s.text.slice(0, 80)}${s.imageUrl ? ` → 画像: ${s.imageUrl}` : " → 画像なし"}`).join("\n")}
+
+` : ""}ページ内の画像一覧（構造化データに画像がない手順や、構造化データがない場合に使ってください）:
 ${stepImages.map((img, i) => `[${i + 1}] URL: ${img.src}${img.alt ? ` | alt: ${img.alt}` : ""}${img.context ? ` | 周辺テキスト: ${img.context}` : ""}`).join("\n")}
 
 回答は以下のJSON形式のみで返してください:
