@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getRecipeById, getCategories } from "@/lib/actions/recipe";
 import { EditRecipeForm } from "./edit-form";
-import type { Ingredient, NutritionInfo } from "@/lib/db/types";
+import type { Ingredient, Step, NutritionInfo } from "@/lib/db/types";
 
 function parseJson<T>(value: string | null, fallback: T): T {
   if (!value) return fallback;
@@ -28,7 +28,10 @@ export default async function EditRecipePage({
   }
 
   const ingredients = parseJson<Ingredient[]>(recipe.ingredients, []);
-  const steps = parseJson<string[]>(recipe.steps, []);
+  const rawSteps = parseJson<(Step | string)[]>(recipe.steps, []);
+  const steps: Step[] = rawSteps.map((s) =>
+    typeof s === "string" ? { text: s, imageUrl: "" } : { text: s.text, imageUrl: s.imageUrl ?? "" }
+  );
   const nutrition = parseJson<NutritionInfo>(recipe.nutrition, {});
 
   const initialData = {

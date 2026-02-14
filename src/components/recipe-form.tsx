@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { StarRating } from "@/components/star-rating";
 import { TagInput } from "@/components/tag-input";
-import type { Ingredient, NutritionInfo } from "@/lib/db/types";
+import type { Ingredient, NutritionInfo, Step } from "@/lib/db/types";
 
 interface RecipeFormData {
   title: string;
@@ -27,7 +27,7 @@ interface RecipeFormData {
   categoryId: string;
   rating: number;
   ingredients: Ingredient[];
-  steps: string[];
+  steps: Step[];
   nutrition: NutritionInfo;
   tags: string[];
 }
@@ -56,8 +56,8 @@ export function RecipeForm({
   const [ingredients, setIngredients] = useState<Ingredient[]>(
     initialData?.ingredients?.length ? initialData.ingredients : [{ name: "", amount: "" }]
   );
-  const [steps, setSteps] = useState<string[]>(
-    initialData?.steps?.length ? initialData.steps : [""]
+  const [steps, setSteps] = useState<Step[]>(
+    initialData?.steps?.length ? initialData.steps : [{ text: "", imageUrl: "" }]
   );
   const [nutrition, setNutrition] = useState<{ key: string; value: string }[]>(() => {
     if (initialData?.nutrition && Object.keys(initialData.nutrition).length > 0) {
@@ -88,7 +88,7 @@ export function RecipeForm({
       categoryId,
       rating,
       ingredients: ingredients.filter((i) => i.name.trim()),
-      steps: steps.filter((s) => s.trim()),
+      steps: steps.filter((s) => s.text.trim()),
       nutrition: nutritionObj,
       tags,
     });
@@ -105,11 +105,11 @@ export function RecipeForm({
   };
 
   // Steps helpers
-  const addStep = () => setSteps([...steps, ""]);
+  const addStep = () => setSteps([...steps, { text: "", imageUrl: "" }]);
   const removeStep = (index: number) => setSteps(steps.filter((_, i) => i !== index));
-  const updateStep = (index: number, value: string) => {
+  const updateStep = (index: number, field: keyof Step, value: string) => {
     const updated = [...steps];
-    updated[index] = value;
+    updated[index] = { ...updated[index], [field]: value };
     setSteps(updated);
   };
 
@@ -268,25 +268,47 @@ export function RecipeForm({
         <Label>調理手順</Label>
         <div className="space-y-2">
           {steps.map((step, index) => (
-            <div key={index} className="flex items-start gap-2">
-              <span className="flex h-9 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
-                {index + 1}
-              </span>
-              <Textarea
-                value={step}
-                onChange={(e) => updateStep(index, e.target.value)}
-                placeholder={`手順 ${index + 1}`}
-                className="min-h-[60px] flex-1"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeStep(index)}
-                disabled={steps.length === 1}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+            <div key={index} className="space-y-2">
+              <div className="flex items-start gap-2">
+                <span className="flex h-9 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+                  {index + 1}
+                </span>
+                <div className="flex-1 space-y-2">
+                  <Textarea
+                    value={step.text}
+                    onChange={(e) => updateStep(index, "text", e.target.value)}
+                    placeholder={`手順 ${index + 1}`}
+                    className="min-h-[60px]"
+                  />
+                  <Input
+                    value={step.imageUrl ?? ""}
+                    onChange={(e) => updateStep(index, "imageUrl", e.target.value)}
+                    placeholder="手順画像URL（任意）"
+                    type="url"
+                  />
+                  {step.imageUrl && (
+                    <div className="overflow-hidden rounded-md border">
+                      <img
+                        src={step.imageUrl}
+                        alt={`手順${index + 1}の画像`}
+                        className="aspect-video w-full max-w-xs object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeStep(index)}
+                  disabled={steps.length === 1}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>

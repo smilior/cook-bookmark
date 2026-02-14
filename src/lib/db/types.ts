@@ -19,13 +19,18 @@ export type RecipeWithDetails = Recipe & {
   createdByUser: User;
   tags: Tag[];
   parsedIngredients: Ingredient[];
-  parsedSteps: string[];
+  parsedSteps: Step[];
   parsedNutrition: NutritionInfo | null;
 };
 
 export type Ingredient = {
   name: string;
   amount: string;
+};
+
+export type Step = {
+  text: string;
+  imageUrl?: string;
 };
 
 export type NutritionInfo = {

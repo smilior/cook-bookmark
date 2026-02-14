@@ -48,7 +48,11 @@ export default function NewRecipePage() {
         servings: data.servings || "",
         calories: data.calories || "",
         ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
-        steps: Array.isArray(data.steps) ? data.steps : [],
+        steps: Array.isArray(data.steps)
+          ? data.steps.map((s: unknown) =>
+              typeof s === "string" ? { text: s, imageUrl: "" } : s
+            )
+          : [],
         nutrition: typeof data.nutrition === "object" && data.nutrition ? data.nutrition : {},
         tags: data.siteName ? [data.siteName] : [],
         categoryId: "",

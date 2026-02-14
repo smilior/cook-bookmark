@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RecipeDetailActions } from "@/components/recipe-detail";
-import type { Ingredient, NutritionInfo } from "@/lib/db/types";
+import type { Ingredient, Step, NutritionInfo } from "@/lib/db/types";
 
 function parseJson<T>(value: string | null, fallback: T): T {
   if (!value) return fallback;
@@ -34,7 +34,7 @@ export default async function RecipeDetailPage({
   }
 
   const ingredients = parseJson<Ingredient[]>(recipe.ingredients, []);
-  const steps = parseJson<string[]>(recipe.steps, []);
+  const steps = parseJson<(Step | string)[]>(recipe.steps, []);
   const nutrition = parseJson<NutritionInfo>(recipe.nutrition, {});
   const hasNutrition = Object.keys(nutrition).length > 0;
 
