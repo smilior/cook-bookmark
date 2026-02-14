@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { recipe, category, tag, recipeTag, user } from "@/lib/db/schema";
-import { getServerSession } from "@/lib/auth-session";
+import { getServerSession, isAllowedEmail } from "@/lib/auth-session";
 import { revalidatePath } from "next/cache";
 import { eq, like, and, or, desc, asc } from "drizzle-orm";
 
@@ -12,6 +12,9 @@ async function requireAuth() {
   const session = await getServerSession();
   if (!session?.user) {
     throw new Error("認証が必要です");
+  }
+  if (!isAllowedEmail(session.user.email)) {
+    throw new Error("このアカウントは許可されていません");
   }
   return session.user;
 }

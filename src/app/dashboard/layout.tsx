@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getServerSession } from "@/lib/auth-session";
+import { getServerSession, isAllowedEmail } from "@/lib/auth-session";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BottomNav } from "@/components/bottom-nav";
 
@@ -12,6 +12,10 @@ export default async function DashboardLayout({
 
   if (!session) {
     redirect("/login");
+  }
+
+  if (!isAllowedEmail(session.user.email)) {
+    redirect("/login?error=unauthorized");
   }
 
   const user = session.user;

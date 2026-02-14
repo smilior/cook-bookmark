@@ -16,6 +16,7 @@ import { useSearchParams } from "next/navigation";
 
 function LoginForm() {
   const searchParams = useSearchParams();
+  const error = searchParams.get("error");
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
   const handleGoogleSignIn = async () => {
@@ -33,6 +34,18 @@ function LoginForm() {
         </div>
         <span className="text-xl font-semibold">Cook Bookmark</span>
       </div>
+
+      {error === "unauthorized" && (
+        <Card className="border-destructive">
+          <CardContent className="pt-6">
+            <p className="text-center text-sm text-destructive">
+              このアカウントはアクセスが許可されていません。
+              <br />
+              管理者にお問い合わせください。
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader className="text-center">
