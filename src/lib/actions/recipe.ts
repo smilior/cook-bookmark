@@ -74,6 +74,7 @@ export async function getRecipes(options?: {
   search?: string;
   categoryId?: string;
   tagId?: string;
+  createdBy?: string;
   favoritesOnly?: boolean;
   sortByRating?: boolean;
 }) {
@@ -92,6 +93,10 @@ export async function getRecipes(options?: {
 
   if (options?.favoritesOnly) {
     conditions.push(eq(recipe.isFavorite, true));
+  }
+
+  if (options?.createdBy) {
+    conditions.push(eq(recipe.createdBy, options.createdBy));
   }
 
   if (options?.tagId) {

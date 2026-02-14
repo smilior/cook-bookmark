@@ -36,6 +36,7 @@ interface Recipe {
   servings: string | null;
   categoryId: string | null;
   categoryName: string | null;
+  createdBy: string | null;
   userName: string | null;
   createdAt: Date;
   tags: { id: string; name: string }[];
@@ -51,6 +52,8 @@ interface DashboardContentProps {
   categories: Category[];
   initialSearch: string;
   initialCategoryId: string | null;
+  initialCreatedBy: string | null;
+  initialCreatedByName: string | null;
 }
 
 export function DashboardContent({
@@ -58,6 +61,8 @@ export function DashboardContent({
   categories,
   initialSearch,
   initialCategoryId,
+  initialCreatedBy,
+  initialCreatedByName,
 }: DashboardContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -220,6 +225,22 @@ export function DashboardContent({
         onSelect={handleCategorySelect}
       />
 
+      {initialCreatedBy && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">登録者:</span>
+          <Badge variant="secondary" className="gap-1">
+            {initialCreatedByName ?? "..."}
+            <button
+              type="button"
+              className="ml-0.5 rounded-full hover:bg-accent"
+              onClick={() => updateParams({ createdBy: null })}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </Badge>
+        </div>
+      )}
+
       {recipes.length > 0 ? (
         <>
           {/* Selection mode header */}
@@ -332,7 +353,25 @@ export function DashboardContent({
                         </Badge>
                       ))}
                       {recipe.userName && (
-                        <span>{recipe.userName}</span>
+                        <button
+                          type="button"
+                          className={`inline-flex items-center rounded-full border px-1.5 py-0 text-xs transition-colors hover:bg-accent ${
+                            initialCreatedBy === recipe.createdBy
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border"
+                          }`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (initialCreatedBy === recipe.createdBy) {
+                              updateParams({ createdBy: null });
+                            } else {
+                              updateParams({ createdBy: recipe.createdBy });
+                            }
+                          }}
+                        >
+                          {recipe.userName}
+                        </button>
                       )}
                     </div>
                   </Link>
