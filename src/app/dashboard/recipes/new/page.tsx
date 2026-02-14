@@ -50,7 +50,7 @@ export default function NewRecipePage() {
         ingredients: Array.isArray(data.ingredients) ? data.ingredients : [],
         steps: Array.isArray(data.steps) ? data.steps : [],
         nutrition: typeof data.nutrition === "object" && data.nutrition ? data.nutrition : {},
-        tags: [],
+        tags: data.siteName ? [data.siteName] : [],
         categoryId: "",
         rating: 0,
       });

@@ -41,6 +41,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     categoryName: r.categoryName,
     userName: r.userName,
     createdAt: r.createdAt,
+    tags: r.tags,
   }));
 
   return (

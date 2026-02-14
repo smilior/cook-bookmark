@@ -88,6 +88,12 @@ export async function POST(request: NextRequest) {
     // Extract image URL from meta tags before stripping HTML
     const imageUrl = extractImageUrl(html);
 
+    // Extract site name from og:site_name or <title>
+    const siteNameMatch =
+      html.match(/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["']/i) ||
+      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:site_name["']/i);
+    const siteName = siteNameMatch?.[1]?.trim() ?? new URL(url).hostname.replace(/^www\./, "");
+
     // Strip HTML and truncate
     const textContent = stripHtml(html).slice(0, 10000);
 
@@ -156,6 +162,7 @@ ${textContent}`;
           ? recipeData.nutrition
           : {},
       imageUrl: recipeData.imageUrl || imageUrl || "",
+      siteName,
     };
 
     return NextResponse.json(extracted);

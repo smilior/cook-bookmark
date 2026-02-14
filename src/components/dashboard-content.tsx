@@ -32,6 +32,7 @@ interface Recipe {
   categoryName: string | null;
   userName: string | null;
   createdAt: Date;
+  tags: { id: string; name: string }[];
 }
 
 interface Category {
@@ -179,6 +180,11 @@ export function DashboardContent({
                   {recipe.servings && (
                     <span>{recipe.servings}</span>
                   )}
+                  {recipe.tags.map((tag) => (
+                    <Badge key={tag.id} variant="outline" className="text-xs px-1.5 py-0">
+                      {tag.name}
+                    </Badge>
+                  ))}
                   {recipe.userName && (
                     <span>{recipe.userName}</span>
                   )}
