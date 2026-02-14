@@ -57,7 +57,6 @@ export default function NewRecipePage() {
         tips: Array.isArray(data.tips) ? data.tips : [],
         tags: data.siteName ? [data.siteName] : [],
         categoryId: "",
-        rating: 0,
       });
       setStep("form");
     } catch {
@@ -83,7 +82,6 @@ export default function NewRecipePage() {
         servings: data.servings || undefined,
         calories: data.calories || undefined,
         categoryId: data.categoryId || undefined,
-        rating: data.rating || undefined,
         ingredients: JSON.stringify(data.ingredients),
         steps: JSON.stringify(data.steps),
         nutrition: Object.keys(data.nutrition).length > 0 ? JSON.stringify(data.nutrition) : undefined,

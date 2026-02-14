@@ -4,8 +4,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 import Link from "next/link";
 import {
-  Heart,
-  ArrowDownUp,
   UtensilsCrossed,
   Plus,
   Clock,
@@ -13,9 +11,6 @@ import {
 } from "lucide-react";
 import { SearchBar } from "@/components/search-bar";
 import { CategoryChips } from "@/components/category-chips";
-import { StarRating } from "@/components/star-rating";
-import { FavoriteButton } from "@/components/favorite-button";
-import { toggleFavorite } from "@/lib/actions/recipe";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -24,8 +19,6 @@ interface Recipe {
   title: string;
   sourceUrl: string | null;
   imageUrl: string | null;
-  rating: number | null;
-  isFavorite: boolean;
   cookingTime: string | null;
   servings: string | null;
   categoryId: string | null;
@@ -45,8 +38,6 @@ interface DashboardContentProps {
   categories: Category[];
   initialSearch: string;
   initialCategoryId: string | null;
-  initialFavoritesOnly: boolean;
-  initialSortByRating: boolean;
 }
 
 export function DashboardContent({
@@ -54,8 +45,6 @@ export function DashboardContent({
   categories,
   initialSearch,
   initialCategoryId,
-  initialFavoritesOnly,
-  initialSortByRating,
 }: DashboardContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -90,22 +79,6 @@ export function DashboardContent({
     [updateParams]
   );
 
-  const handleToggleFavorites = useCallback(() => {
-    updateParams({ favorites: initialFavoritesOnly ? null : "1" });
-  }, [updateParams, initialFavoritesOnly]);
-
-  const handleToggleSort = useCallback(() => {
-    updateParams({ sort: initialSortByRating ? null : "rating" });
-  }, [updateParams, initialSortByRating]);
-
-  const handleToggleFavorite = useCallback(
-    async (id: string) => {
-      await toggleFavorite(id);
-      router.refresh();
-    },
-    [router]
-  );
-
   return (
     <div className="space-y-4">
       <SearchBar
@@ -114,36 +87,11 @@ export function DashboardContent({
         placeholder="レシピを検索..."
       />
 
-      <div className="space-y-3">
-        <CategoryChips
-          categories={categories}
-          selectedId={initialCategoryId}
-          onSelect={handleCategorySelect}
-        />
-
-        <div className="flex gap-2">
-          <Button
-            variant={initialFavoritesOnly ? "default" : "outline"}
-            size="sm"
-            onClick={handleToggleFavorites}
-            className="gap-1.5"
-          >
-            <Heart
-              className={`h-4 w-4 ${initialFavoritesOnly ? "fill-current" : ""}`}
-            />
-            お気に入り
-          </Button>
-          <Button
-            variant={initialSortByRating ? "default" : "outline"}
-            size="sm"
-            onClick={handleToggleSort}
-            className="gap-1.5"
-          >
-            <ArrowDownUp className="h-4 w-4" />
-            評価順
-          </Button>
-        </div>
-      </div>
+      <CategoryChips
+        categories={categories}
+        selectedId={initialCategoryId}
+        onSelect={handleCategorySelect}
+      />
 
       {recipes.length > 0 ? (
         <div className="divide-y divide-border rounded-lg border bg-card">
@@ -152,13 +100,6 @@ export function DashboardContent({
               key={recipe.id}
               className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/50"
             >
-              {/* Favorite */}
-              <FavoriteButton
-                isFavorite={recipe.isFavorite}
-                onToggle={() => handleToggleFavorite(recipe.id)}
-                size="sm"
-              />
-
               {/* Title + Meta */}
               <Link
                 href={`/dashboard/recipes/${recipe.id}`}
@@ -190,11 +131,6 @@ export function DashboardContent({
                   )}
                 </div>
               </Link>
-
-              {/* Rating */}
-              <div className="hidden sm:block">
-                <StarRating value={recipe.rating ?? 0} readonly size="sm" />
-              </div>
 
               {/* Source link */}
               {recipe.sourceUrl && (

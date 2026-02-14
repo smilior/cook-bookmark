@@ -5,8 +5,6 @@ interface DashboardPageProps {
   searchParams: Promise<{
     search?: string;
     categoryId?: string;
-    favorites?: string;
-    sort?: string;
   }>;
 }
 
@@ -15,15 +13,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   const search = params.search ?? "";
   const categoryId = params.categoryId ?? "";
-  const favoritesOnly = params.favorites === "1";
-  const sortByRating = params.sort === "rating";
 
   const [recipes, categories] = await Promise.all([
     getRecipes({
       search: search || undefined,
       categoryId: categoryId || undefined,
-      favoritesOnly: favoritesOnly || undefined,
-      sortByRating: sortByRating || undefined,
     }),
     getCategories(),
   ]);
@@ -33,8 +27,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     title: r.title,
     sourceUrl: r.sourceUrl,
     imageUrl: r.imageUrl,
-    rating: r.rating,
-    isFavorite: r.isFavorite,
     cookingTime: r.cookingTime,
     servings: r.servings,
     categoryId: r.categoryId,
@@ -50,8 +42,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       categories={categories}
       initialSearch={search}
       initialCategoryId={categoryId || null}
-      initialFavoritesOnly={favoritesOnly}
-      initialSortByRating={sortByRating}
     />
   );
 }

@@ -19,7 +19,7 @@ export function CategoryChips({
   const allCategories = [{ id: "__all__", name: "すべて" }, ...categories];
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex flex-wrap gap-2">
       {allCategories.map((cat) => {
         const isActive =
           cat.id === "__all__" ? selectedId == null : cat.id === selectedId;
@@ -29,10 +29,10 @@ export function CategoryChips({
             key={cat.id}
             type="button"
             onClick={() => onSelect(cat.id === "__all__" ? null : cat.id)}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+            className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${
               isActive
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                : "border-border bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground"
             }`}
           >
             {cat.name}

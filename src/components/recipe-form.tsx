@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StarRating } from "@/components/star-rating";
 import { TagInput } from "@/components/tag-input";
 import type { Ingredient, NutritionInfo, Step } from "@/lib/db/types";
 
@@ -233,12 +232,6 @@ export function RecipeForm({
             ))}
           </SelectContent>
         </Select>
-      </div>
-
-      {/* Rating */}
-      <div className="space-y-2">
-        <Label>星評価</Label>
-        <StarRating value={rating} onChange={setRating} />
       </div>
 
       {/* Ingredients */}
