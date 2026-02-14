@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { geminiModel } from "@/lib/gemini";
+import { ai, MODEL } from "@/lib/gemini";
 
 function extractImageUrl(html: string): string {
   // Try og:image first
@@ -116,8 +116,12 @@ ${textContent}`;
     // Call Gemini API
     let recipeData;
     try {
-      const result = await geminiModel.generateContent(prompt);
-      const responseText = result.response.text().trim();
+      const response = await ai.models.generateContent({
+        model: MODEL,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      });
+
+      const responseText = response.text?.trim() ?? "";
 
       // Parse JSON response - strip markdown code blocks if present
       let jsonText = responseText;
