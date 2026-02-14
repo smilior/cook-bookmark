@@ -30,7 +30,7 @@ export default async function EditRecipePage({
   const ingredients = parseJson<Ingredient[]>(recipe.ingredients, []);
   const rawSteps = parseJson<(Step | string)[]>(recipe.steps, []);
   const steps: Step[] = rawSteps.map((s) =>
-    typeof s === "string" ? { text: s, imageUrl: "" } : { text: s.text, imageUrl: s.imageUrl ?? "" }
+    typeof s === "string" ? { text: s, imageUrl: "", tip: "" } : { text: s.text, imageUrl: s.imageUrl ?? "", tip: s.tip ?? "" }
   );
   const nutrition = parseJson<NutritionInfo>(recipe.nutrition, {});
   const tips = parseJson<string[]>(recipe.tips, []);

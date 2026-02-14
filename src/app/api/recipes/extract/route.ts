@@ -206,12 +206,12 @@ JSON形式のみで回答してください。マークダウンのコードブ�
 抽出する情報:
 - title: 料理名
 - ingredients: 材料リスト（配列）各要素は {"name": "材料名", "amount": "分量", "group": "グループ名"} の形式。材料が「A」「B」「ソース」「生地」「タレ」などのグループに分かれている場合はgroup名を設定。グループがない場合はgroupを空文字列にしてください
-- steps: 調理手順（配列）各要素は {"text": "手順テキスト", "imageUrl": "手順画像URL"} の形式。下記の「画像一覧」からalt属性や周辺テキストを手がかりに、各手順に対応する画像URLを設定してください。対応する画像がない手順はimageUrlを空文字列にしてください
+- steps: 調理手順（配列）各要素は {"text": "手順テキスト", "imageUrl": "手順画像URL", "tip": "この手順のポイント・コツ"} の形式。下記の「画像一覧」からalt属性や周辺テキストを手がかりに、各手順に対応する画像URLを設定してください。対応する画像がない手順はimageUrlを空文字列にしてください。各手順に固有のポイントやコツがあればtipに設定、なければ空文字列にしてください
 - cookingTime: 調理時間
 - servings: 何人前
 - calories: カロリー
 - nutrition: 栄養情報（オブジェクト形式 {"key": "value"}）
-- tips: ポイント・コツ・ヒント（文字列の配列）。レシピのポイントやコツ、ワンポイントアドバイスなどがあれば抽出してください
+- tips: 全体的なポイント・コツ・ヒント（文字列の配列）。特定の手順に紐付かない一般的なポイントやコツがあれば抽出してください。各手順固有のコツはstepsのtipフィールドに入れてください
 - category: このレシピのカテゴリ名（文字列）。${categoryNames.length > 0 ? `以下の既存カテゴリから最も適切なものを選んでください: [${categoryNames.join(", ")}]。どれにも当てはまらない場合は新しいカテゴリ名を提案してください` : "料理のカテゴリ名を提案してください"}（例: 主菜、副菜、スープ、デザート、パン、麺類など）
 - imageUrl: "${imageUrl}"
 
@@ -224,7 +224,7 @@ ${jsonLdSteps.map((s, i) => `手順${i + 1}: ${s.text.slice(0, 80)}${s.imageUrl 
 ${stepImages.map((img, i) => `[${i + 1}] URL: ${img.src}${img.alt ? ` | alt: ${img.alt}` : ""}${img.context ? ` | 周辺テキスト: ${img.context}` : ""}`).join("\n")}
 
 回答は以下のJSON形式のみで返してください:
-{"title":"string","ingredients":[{"name":"string","amount":"string","group":"string"}],"steps":[{"text":"string","imageUrl":"string"}],"cookingTime":"string","servings":"string","calories":"string","nutrition":{},"tips":["string"],"category":"string","imageUrl":"string"}
+{"title":"string","ingredients":[{"name":"string","amount":"string","group":"string"}],"steps":[{"text":"string","imageUrl":"string","tip":"string"}],"cookingTime":"string","servings":"string","calories":"string","nutrition":{},"tips":["string"],"category":"string","imageUrl":"string"}
 
 ウェブページのテキスト:
 ${textContent}`;
@@ -268,9 +268,15 @@ ${textContent}`;
           }))
         : [],
       steps: Array.isArray(recipeData.steps)
-        ? recipeData.steps.map((s: unknown) =>
-            typeof s === "string" ? { text: s, imageUrl: "" } : s
-          )
+        ? recipeData.steps.map((s: unknown) => {
+            if (typeof s === "string") return { text: s, imageUrl: "", tip: "" };
+            const step = s as Record<string, unknown>;
+            return {
+              text: step.text || "",
+              imageUrl: step.imageUrl || "",
+              tip: typeof step.tip === "string" ? step.tip.trim() : "",
+            };
+          })
         : [],
       cookingTime: recipeData.cookingTime || "",
       servings: recipeData.servings || "",

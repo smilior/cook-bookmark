@@ -32,6 +32,7 @@ export type Ingredient = {
 export type Step = {
   text: string;
   imageUrl?: string;
+  tip?: string;
 };
 
 export type NutritionInfo = {

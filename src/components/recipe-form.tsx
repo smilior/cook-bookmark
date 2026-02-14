@@ -311,6 +311,11 @@ export function RecipeForm({
                       />
                     </div>
                   )}
+                  <Input
+                    value={step.tip ?? ""}
+                    onChange={(e) => updateStep(index, "tip", e.target.value)}
+                    placeholder="この手順のポイント・コツ（任意）"
+                  />
                 </div>
                 <Button
                   type="button"
