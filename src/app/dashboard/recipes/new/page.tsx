@@ -54,6 +54,7 @@ export default function NewRecipePage() {
             )
           : [],
         nutrition: typeof data.nutrition === "object" && data.nutrition ? data.nutrition : {},
+        tips: Array.isArray(data.tips) ? data.tips : [],
         tags: data.siteName ? [data.siteName] : [],
         categoryId: "",
         rating: 0,
@@ -86,6 +87,7 @@ export default function NewRecipePage() {
         ingredients: JSON.stringify(data.ingredients),
         steps: JSON.stringify(data.steps),
         nutrition: Object.keys(data.nutrition).length > 0 ? JSON.stringify(data.nutrition) : undefined,
+        tips: data.tips.length > 0 ? JSON.stringify(data.tips) : undefined,
         tagNames: data.tags,
       });
       router.push("/dashboard");

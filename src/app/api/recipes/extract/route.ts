@@ -109,12 +109,13 @@ JSON形式のみで回答してください。マークダウンのコードブ�
 
 抽出する情報:
 - title: 料理名
-- ingredients: 材料リスト（配列）各要素は {"name": "材料名", "amount": "分量"} の形式
+- ingredients: 材料リスト（配列）各要素は {"name": "材料名", "amount": "分量", "group": "グループ名"} の形式。材料が「A」「B」「ソース」「生地」「タレ」などのグループに分かれている場合はgroup名を設定。グループがない場合はgroupを空文字列にしてください
 - steps: 調理手順（配列）各要素は {"text": "手順テキスト", "imageUrl": "手順画像URL"} の形式。画像がない手順はimageUrlを空文字列にしてください
 - cookingTime: 調理時間
 - servings: 何人前
 - calories: カロリー
 - nutrition: 栄養情報（オブジェクト形式 {"key": "value"}）
+- tips: ポイント・コツ・ヒント（文字列の配列）。レシピのポイントやコツ、ワンポイントアドバイスなどがあれば抽出してください
 - imageUrl: "${imageUrl}"
 
 情報が見つからない場合は空文字列または空配列を返してください。
@@ -123,7 +124,7 @@ JSON形式のみで回答してください。マークダウンのコードブ�
 ${stepImageMatches.slice(0, 20).join("\n")}
 
 回答は以下のJSON形式のみで返してください:
-{"title":"string","ingredients":[{"name":"string","amount":"string"}],"steps":[{"text":"string","imageUrl":"string"}],"cookingTime":"string","servings":"string","calories":"string","nutrition":{},"imageUrl":"string"}
+{"title":"string","ingredients":[{"name":"string","amount":"string","group":"string"}],"steps":[{"text":"string","imageUrl":"string"}],"cookingTime":"string","servings":"string","calories":"string","nutrition":{},"tips":["string"],"imageUrl":"string"}
 
 ウェブページのテキスト:
 ${textContent}`;
@@ -160,7 +161,11 @@ ${textContent}`;
     const extracted = {
       title: recipeData.title || "",
       ingredients: Array.isArray(recipeData.ingredients)
-        ? recipeData.ingredients
+        ? recipeData.ingredients.map((i: Record<string, unknown>) => ({
+            name: i.name || "",
+            amount: i.amount || "",
+            group: i.group || "",
+          }))
         : [],
       steps: Array.isArray(recipeData.steps)
         ? recipeData.steps.map((s: unknown) =>
@@ -174,6 +179,9 @@ ${textContent}`;
         typeof recipeData.nutrition === "object" && recipeData.nutrition !== null
           ? recipeData.nutrition
           : {},
+      tips: Array.isArray(recipeData.tips)
+        ? recipeData.tips.filter((t: unknown) => typeof t === "string" && t.trim())
+        : [],
       imageUrl: recipeData.imageUrl || imageUrl || "",
       siteName,
     };

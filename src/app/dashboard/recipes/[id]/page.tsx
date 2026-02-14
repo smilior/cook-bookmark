@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { Clock, Users, ExternalLink, UtensilsCrossed } from "lucide-react";
+import { Clock, Users, ExternalLink, UtensilsCrossed, Lightbulb } from "lucide-react";
 import { getRecipeById } from "@/lib/actions/recipe";
 import { StarRating } from "@/components/star-rating";
 import { IngredientList } from "@/components/ingredient-list";
@@ -36,6 +36,7 @@ export default async function RecipeDetailPage({
   const ingredients = parseJson<Ingredient[]>(recipe.ingredients, []);
   const steps = parseJson<(Step | string)[]>(recipe.steps, []);
   const nutrition = parseJson<NutritionInfo>(recipe.nutrition, {});
+  const tips = parseJson<string[]>(recipe.tips, []);
   const hasNutrition = Object.keys(nutrition).length > 0;
 
   return (
@@ -121,6 +122,24 @@ export default async function RecipeDetailPage({
         <>
           <h2 className="mb-3 text-lg font-semibold">作り方</h2>
           <StepList steps={steps} />
+          {(tips.length > 0 || hasNutrition) && <Separator className="my-6" />}
+        </>
+      )}
+
+      {/* Tips */}
+      {tips.length > 0 && (
+        <>
+          <div className="mb-3 flex items-center gap-2">
+            <Lightbulb className="h-5 w-5 text-yellow-500" />
+            <h2 className="text-lg font-semibold">ポイント・コツ</h2>
+          </div>
+          <ul className="space-y-2">
+            {tips.map((tip, i) => (
+              <li key={i} className="text-sm leading-relaxed text-muted-foreground">
+                {tip}
+              </li>
+            ))}
+          </ul>
           {hasNutrition && <Separator className="my-6" />}
         </>
       )}

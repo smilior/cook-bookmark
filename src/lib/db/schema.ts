@@ -81,6 +81,7 @@ export const recipe = sqliteTable("recipe", {
   servings: text("servings"),
   calories: text("calories"),
   nutrition: text("nutrition"), // JSON string
+  tips: text("tips"), // JSON string
   imageUrl: text("image_url"),
   rating: integer("rating"),
   isFavorite: integer("is_favorite", { mode: "boolean" }).notNull().default(false),

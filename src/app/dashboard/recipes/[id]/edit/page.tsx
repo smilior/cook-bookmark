@@ -33,6 +33,7 @@ export default async function EditRecipePage({
     typeof s === "string" ? { text: s, imageUrl: "" } : { text: s.text, imageUrl: s.imageUrl ?? "" }
   );
   const nutrition = parseJson<NutritionInfo>(recipe.nutrition, {});
+  const tips = parseJson<string[]>(recipe.tips, []);
 
   const initialData = {
     title: recipe.title,
@@ -46,6 +47,7 @@ export default async function EditRecipePage({
     ingredients,
     steps,
     nutrition,
+    tips,
     tags: recipe.tags.map((t) => t.name),
   };
 

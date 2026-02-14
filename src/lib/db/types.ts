@@ -26,6 +26,7 @@ export type RecipeWithDetails = Recipe & {
 export type Ingredient = {
   name: string;
   amount: string;
+  group?: string;
 };
 
 export type Step = {

@@ -29,6 +29,7 @@ interface RecipeFormData {
   ingredients: Ingredient[];
   steps: Step[];
   nutrition: NutritionInfo;
+  tips: string[];
   tags: string[];
 }
 
@@ -68,6 +69,9 @@ export function RecipeForm({
     }
     return [];
   });
+  const [tips, setTips] = useState<string[]>(
+    initialData?.tips?.length ? initialData.tips : []
+  );
   const [tags, setTags] = useState<string[]>(initialData?.tags ?? []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,8 +94,18 @@ export function RecipeForm({
       ingredients: ingredients.filter((i) => i.name.trim()),
       steps: steps.filter((s) => s.text.trim()),
       nutrition: nutritionObj,
+      tips: tips.filter((t) => t.trim()),
       tags,
     });
+  };
+
+  // Tips helpers
+  const addTip = () => setTips([...tips, ""]);
+  const removeTip = (index: number) => setTips(tips.filter((_, i) => i !== index));
+  const updateTip = (index: number, value: string) => {
+    const updated = [...tips];
+    updated[index] = value;
+    setTips(updated);
   };
 
   // Ingredients helpers
@@ -234,6 +248,12 @@ export function RecipeForm({
           {ingredients.map((item, index) => (
             <div key={index} className="flex items-center gap-2">
               <Input
+                value={item.group ?? ""}
+                onChange={(e) => updateIngredient(index, "group", e.target.value)}
+                placeholder="グループ"
+                className="w-20"
+              />
+              <Input
                 value={item.name}
                 onChange={(e) => updateIngredient(index, "name", e.target.value)}
                 placeholder="材料名"
@@ -350,6 +370,35 @@ export function RecipeForm({
         <Button type="button" variant="outline" size="sm" onClick={addNutrition}>
           <Plus className="mr-1 h-4 w-4" />
           栄養情報を追加
+        </Button>
+      </div>
+
+      {/* Tips */}
+      <div className="space-y-2">
+        <Label>ポイント・コツ</Label>
+        <div className="space-y-2">
+          {tips.map((tip, index) => (
+            <div key={index} className="flex items-start gap-2">
+              <Textarea
+                value={tip}
+                onChange={(e) => updateTip(index, e.target.value)}
+                placeholder={`ポイント ${index + 1}`}
+                className="min-h-[60px] flex-1"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeTip(index)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+        <Button type="button" variant="outline" size="sm" onClick={addTip}>
+          <Plus className="mr-1 h-4 w-4" />
+          ポイントを追加
         </Button>
       </div>
 

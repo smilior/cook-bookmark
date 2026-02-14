@@ -27,6 +27,7 @@ export async function createRecipe(data: {
   servings?: string;
   calories?: string;
   nutrition?: string;
+  tips?: string;
   imageUrl?: string;
   categoryId?: string;
   rating?: number;
@@ -46,6 +47,7 @@ export async function createRecipe(data: {
     servings: data.servings ?? null,
     calories: data.calories ?? null,
     nutrition: data.nutrition ?? null,
+    tips: data.tips ?? null,
     imageUrl: data.imageUrl ?? null,
     categoryId: data.categoryId ?? null,
     rating: data.rating ?? null,
@@ -117,6 +119,7 @@ export async function getRecipes(options?: {
       servings: recipe.servings,
       calories: recipe.calories,
       nutrition: recipe.nutrition,
+      tips: recipe.tips,
       imageUrl: recipe.imageUrl,
       rating: recipe.rating,
       isFavorite: recipe.isFavorite,
@@ -179,6 +182,7 @@ export async function getRecipeById(id: string) {
       servings: recipe.servings,
       calories: recipe.calories,
       nutrition: recipe.nutrition,
+      tips: recipe.tips,
       imageUrl: recipe.imageUrl,
       rating: recipe.rating,
       isFavorite: recipe.isFavorite,
@@ -226,6 +230,7 @@ export async function updateRecipe(
     servings?: string;
     calories?: string;
     nutrition?: string;
+    tips?: string;
     imageUrl?: string;
     categoryId?: string;
     rating?: number;
