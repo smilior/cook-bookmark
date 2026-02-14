@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ai, MODEL } from "@/lib/gemini";
+import { ai, MODEL, GEMINI_CONFIG } from "@/lib/gemini";
 
 function extractImageUrl(html: string): string {
   // Try og:image first
@@ -118,10 +118,13 @@ ${textContent}`;
     try {
       const response = await ai.models.generateContent({
         model: MODEL,
+        config: GEMINI_CONFIG,
         contents: [{ role: "user", parts: [{ text: prompt }] }],
       });
 
       const responseText = response.text?.trim() ?? "";
+      console.log("[extract] Gemini response length:", responseText.length);
+      console.log("[extract] Gemini response preview:", responseText.slice(0, 500));
 
       // Parse JSON response - strip markdown code blocks if present
       let jsonText = responseText;
@@ -130,7 +133,8 @@ ${textContent}`;
       }
 
       recipeData = JSON.parse(jsonText);
-    } catch {
+    } catch (e) {
+      console.error("[extract] Gemini API error:", e);
       return NextResponse.json(
         { error: "レシピ情報の解析に失敗しました" },
         { status: 500 }
