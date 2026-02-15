@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ai, MODEL } from "@/lib/gemini";
+import { callAIForJSON } from "@/lib/ai-extract";
 import { db } from "@/lib/db";
 import { category } from "@/lib/db/schema";
 import { asc } from "drizzle-orm";
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     // Truncate text to avoid exceeding token limits
     const textContent = text.trim().slice(0, 15000);
 
-    // Build the Gemini prompt
+    // Build the prompt
     const prompt = `以下のテキストからレシピ情報を抽出してください。
 テキストはウェブページからコピーされたものや、ユーザーが直接入力したものです。
 JSON形式のみで回答してください。マークダウンのコードブロックは使わないでください。
@@ -72,69 +72,23 @@ JSON形式のみで回答してください。マークダウンのコードブ�
 テキスト:
 ${textContent}`;
 
-    // Call Gemini API
+    // Call AI (Gemini first, OpenAI fallback)
     let recipeData;
     try {
-      const response = await ai.models.generateContent({
-        model: MODEL,
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-      });
-
-      // Safely extract text from response
-      let responseText = "";
-      try {
-        responseText = response.text?.trim() ?? "";
-      } catch {
-        // response.text getter can throw if response was blocked or empty
-        // Try extracting from candidates directly
-        const parts = response.candidates?.[0]?.content?.parts;
-        if (parts) {
-          responseText = parts
-            .filter((p) => "text" in p && typeof p.text === "string")
-            .map((p) => (p as { text: string }).text)
-            .join("")
-            .trim();
-        }
-      }
-
-      if (!responseText) {
-        console.error("[extract-text] Empty Gemini response", JSON.stringify(response.candidates?.[0]?.finishReason));
-        return NextResponse.json(
-          { error: "AIからの応答が空でした。もう一度お試しください。" },
-          { status: 500 }
-        );
-      }
-
-      console.log("[extract-text] Gemini response length:", responseText.length);
-      console.log("[extract-text] Gemini response preview:", responseText.slice(0, 500));
-
-      // Parse JSON response - strip markdown code blocks if present
-      let jsonText = responseText;
-      if (jsonText.startsWith("```")) {
-        jsonText = jsonText.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
-      }
-
-      recipeData = JSON.parse(jsonText);
+      recipeData = await callAIForJSON(prompt);
     } catch (e) {
       const errMsg = e instanceof Error ? e.message : String(e);
-      console.error("[extract-text] Gemini API error:", errMsg);
-      // Handle rate limit errors
-      if (errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("quota")) {
-        return NextResponse.json(
-          { error: "AIの利用制限に達しました。しばらく待ってからお試しください。" },
-          { status: 429 }
-        );
-      }
+      console.error("[extract-text] AI error:", errMsg);
       return NextResponse.json(
         { error: "レシピ情報の解析に失敗しました" },
         { status: 500 }
       );
     }
 
-    // Check if Gemini indicated no recipe was found
+    // Check if AI indicated no recipe was found
     if (recipeData.error) {
       return NextResponse.json(
-        { error: recipeData.error },
+        { error: recipeData.error as string },
         { status: 422 }
       );
     }
@@ -171,7 +125,7 @@ ${textContent}`;
         ? recipeData.tips.filter((t: unknown) => typeof t === "string" && t.trim())
         : [],
       category: typeof recipeData.category === "string" ? recipeData.category.trim() : "",
-      imageUrl: recipeData.imageUrl || "",
+      imageUrl: (recipeData.imageUrl as string) || "",
     };
 
     return NextResponse.json(extracted);

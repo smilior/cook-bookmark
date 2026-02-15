@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ai, MODEL, GEMINI_CONFIG } from "@/lib/gemini";
+import { GEMINI_CONFIG } from "@/lib/gemini";
+import { callAIForJSON } from "@/lib/ai-extract";
 import { db } from "@/lib/db";
 import { category } from "@/lib/db/schema";
 import { asc } from "drizzle-orm";
+
+// Vercel Serverless Function timeout (seconds)
+export const maxDuration = 60;
 
 function extractImageUrl(html: string): string {
   // Try og:image first
@@ -235,35 +239,13 @@ ${stepImages.map((img, i) => `[${i + 1}] URL: ${img.src}${img.alt ? ` | alt: ${i
 ウェブページのテキスト:
 ${textContent}`;
 
-    // Call Gemini API
+    // Call AI (Gemini first, OpenAI fallback)
     let recipeData;
     try {
-      const response = await ai.models.generateContent({
-        model: MODEL,
-        config: GEMINI_CONFIG,
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-      });
-
-      const responseText = response.text?.trim() ?? "";
-      console.log("[extract] Gemini response length:", responseText.length);
-      console.log("[extract] Gemini response preview:", responseText.slice(0, 500));
-
-      // Parse JSON response - strip markdown code blocks if present
-      let jsonText = responseText;
-      if (jsonText.startsWith("```")) {
-        jsonText = jsonText.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
-      }
-
-      recipeData = JSON.parse(jsonText);
+      recipeData = await callAIForJSON(prompt, GEMINI_CONFIG);
     } catch (e) {
       const errMsg = e instanceof Error ? e.message : String(e);
-      console.error("[extract] Gemini API error:", errMsg);
-      if (errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("quota")) {
-        return NextResponse.json(
-          { error: "AIの利用制限に達しました。しばらく待ってからお試しください。" },
-          { status: 429 }
-        );
-      }
+      console.error("[extract] AI error:", errMsg);
       return NextResponse.json(
         { error: "レシピ情報の解析に失敗しました" },
         { status: 500 }
