@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ai, MODEL, GEMINI_CONFIG } from "@/lib/gemini";
+import { ai, MODEL, GEMINI_CONFIG_NO_SEARCH } from "@/lib/gemini";
 import { db } from "@/lib/db";
 import { category } from "@/lib/db/schema";
 import { asc } from "drizzle-orm";
@@ -74,7 +74,7 @@ ${textContent}`;
     try {
       const response = await ai.models.generateContent({
         model: MODEL,
-        config: GEMINI_CONFIG,
+        config: GEMINI_CONFIG_NO_SEARCH,
         contents: [{ role: "user", parts: [{ text: prompt }] }],
       });
 

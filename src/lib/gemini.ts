@@ -12,3 +12,10 @@ export const GEMINI_CONFIG = {
   },
   tools: [{ googleSearch: {} }],
 };
+
+// Google Search grounding なしの設定（テキスト解析用）
+export const GEMINI_CONFIG_NO_SEARCH = {
+  thinkingConfig: {
+    thinkingBudget: -1,
+  },
+};
