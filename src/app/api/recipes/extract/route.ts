@@ -256,7 +256,14 @@ ${textContent}`;
 
       recipeData = JSON.parse(jsonText);
     } catch (e) {
-      console.error("[extract] Gemini API error:", e);
+      const errMsg = e instanceof Error ? e.message : String(e);
+      console.error("[extract] Gemini API error:", errMsg);
+      if (errMsg.includes("429") || errMsg.includes("RESOURCE_EXHAUSTED") || errMsg.includes("quota")) {
+        return NextResponse.json(
+          { error: "AIの利用制限に達しました。しばらく待ってからお試しください。" },
+          { status: 429 }
+        );
+      }
       return NextResponse.json(
         { error: "レシピ情報の解析に失敗しました" },
         { status: 500 }
